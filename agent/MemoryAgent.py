@@ -3,7 +3,7 @@ from library.initKeras import *
 
 class MemoryAgent:
 
-    def __init__(self, agentId, memorySize, actionSize, rewardManager, gamma=0.5, epsilon = 0.2, explorationStrategy = None):
+    def __init__(self, agentId, memorySize, actionSize, rewardManager, gamma=0.5, alpha = 0.9, epsilon = 0.2, explorationStrategy = None):
         self.id = agentId
         self.memory = np.zeros(memorySize, dtype=np.float)
         self.actions = np.arange(actionSize).astype(float)
@@ -11,6 +11,7 @@ class MemoryAgent:
         self.epsilon = epsilon
         self.explorationStrategy = explorationStrategy
         self.gamma = gamma
+        self.alpha = alpha
         self.v = np.zeros(memorySize)
         self.q = self.initQModel()
         self.policy = self.initPolicy()
@@ -80,10 +81,11 @@ class MemoryAgent:
         
         # else get the best action
         else:
-            return self.getBestAction(state)
+            _,a = self.getBestQA(state)
+            return a
 
 
-    def getBestAction(self, state):
+    def getBestQA(self, state):
 
         maxV = float('-inf')
         maxA = -1
@@ -93,7 +95,7 @@ class MemoryAgent:
                 maxV = q_s_a
                 maxA = action
         
-        return action
+        return maxV, maxA
 
     def getQVal(self, state, action):
         #TODO improve this method with all action predictions
@@ -106,6 +108,12 @@ class MemoryAgent:
         # Update q values Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action]
 
         # 1 update q(oldState,actionTaken)
+
+        q_oldS_a = self.getQVal(oldState, actionTaken)
+        newVmax, newAmax = self.getBestQA(newState)
+
+        newQval = q_oldS_a + self.alpha * (self.rewardManager.getReward(self.id, actionTaken) + self.gamma * newVmax - q_oldS_a )
+        
 
 
 

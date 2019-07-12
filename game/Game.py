@@ -1,7 +1,6 @@
 from abc import abstractmethod
-from game.RewardManager import RewardManager
 
-class Game(RewardManager):
+class Game():
     
     @abstractmethod
     def play(self, steps):
@@ -9,4 +8,8 @@ class Game(RewardManager):
 
     @abstractmethod
     def nextStep(self, playerId, stepNo):
+        pass
+    
+    @abstractmethod
+    def reward(self, outcome, actionTaken, reward):
         pass

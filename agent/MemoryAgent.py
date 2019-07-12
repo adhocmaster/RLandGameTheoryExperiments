@@ -4,7 +4,7 @@ from library.initKeras import *
 
 class MemoryAgent:
 
-    def __init__(self, agentId, memorySize, actionSize, rewardManager, experienceSize=0, experienceReplayRatio=0., gamma=0.5, alpha = 0.9, epsilon = 0.2, explorationStrategy = None):
+    def __init__(self, agentId, memorySize, actionSize, experienceSize=0, experienceReplayRatio=0., gamma=0.5, alpha = 0.9, epsilon = 0.2, explorationStrategy = None):
 
         self.floatx = 'float16'
         k.set_floatx(self.floatx)
@@ -16,7 +16,6 @@ class MemoryAgent:
         self.memory = deque(np.zeros(memorySize, dtype=np.float16), maxlen=memorySize)
 
         self.actions = np.arange(actionSize).astype(self.floatx)
-        self.rewardManager = rewardManager
 
         self.epsilon = epsilon # for epsilon explorationStrategy
         self.explorationStrategy = explorationStrategy
@@ -123,7 +122,7 @@ class MemoryAgent:
         return self.q.predict([np.append(state, action)])[0]
 
 
-    def updateQ(self, oldState, newState, actionTaken):
+    def updateQ(self, oldState, newState, actionTaken, reward):
         
         # Update q values Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action]
 
@@ -132,7 +131,7 @@ class MemoryAgent:
         q_oldS_a = self.getQVal(oldState, actionTaken)
         newVmax, newAmax = self.getBestQA(newState)
 
-        newQval = q_oldS_a + self.alpha * (self.rewardManager.getReward(self.id, actionTaken) + self.gamma * newVmax - q_oldS_a )
+        newQval = q_oldS_a + self.alpha * (reward + self.gamma * newVmax - q_oldS_a)
         
         self.trainQModel(oldState, actionTaken, newQval)
 
@@ -140,6 +139,19 @@ class MemoryAgent:
 
 
     def trainQModel(self, state, action, newQval):
+
         X = np.append(state, [action]).reshape(-1, 1)
         self.q.fit(X, newQval, epochs=1, batch_size=1)
 
+    
+    def move(self, stepNo):
+        # return action
+        return self.getAction(self.getCurrentState)
+    
+    def reward(self, outcome, actionTaken, reward):
+        # this player got this reward for this action
+
+        oldState = self.getCurrentState()
+        self.memory.append(outcome) # this is the current state now
+        newState = self.getCurrentState()
+        self.updateQ(oldState, newState, actionTaken, reward)

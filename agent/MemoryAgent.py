@@ -1,20 +1,38 @@
 import numpy as np
+from collections import deque 
 from library.initKeras import *
 
 class MemoryAgent:
 
-    def __init__(self, agentId, memorySize, actionSize, rewardManager, gamma=0.5, alpha = 0.9, epsilon = 0.2, explorationStrategy = None):
+    def __init__(self, agentId, memorySize, actionSize, rewardManager, experienceSize=0, experienceReplayRatio=0., gamma=0.5, alpha = 0.9, epsilon = 0.2, explorationStrategy = None):
+
+        self.floatx = 'float16'
+        k.set_floatx(self.floatx)
+        k.set_epsilon(1e-4)
+
+
         self.id = agentId
-        self.memory = np.zeros(memorySize, dtype=np.float)
-        self.actions = np.arange(actionSize).astype(float)
+        self.memorySize = memorySize # number of items in the state.
+        self.memory = deque(np.zeros(memorySize, dtype=np.float16), maxlen=memorySize)
+
+        self.actions = np.arange(actionSize).astype(self.floatx)
         self.rewardManager = rewardManager
-        self.epsilon = epsilon
+
+        self.epsilon = epsilon # for epsilon explorationStrategy
         self.explorationStrategy = explorationStrategy
-        self.gamma = gamma
-        self.alpha = alpha
+
+        self.gamma = gamma # discount
+        self.alpha = alpha # learning rate
         self.v = np.zeros(memorySize)
         self.q = self.initQModel()
         self.policy = self.initPolicy()
+        # self.memory = np.zeros(memorySize, dtype=self.floatx)
+        # if memorySize > experienceSize:
+        #     self.memory = np.zeros(memorySize, dtype=self.floatx)
+        # else:
+        #     self.memory = np.zeros(experienceSize, dtype=self.floatx)
+
+        self.experienceReplayRatio = experienceReplayRatio
     
     def takeAction(self, actionNo):
         self.memory[:-1] = self.memory[1:]
@@ -66,7 +84,7 @@ class MemoryAgent:
 
         output = layers.Dense(len(self.actions), actvation=activations.softmax)
 
-        model = models.Model(model_input, output, name = f'QA_{self.id}')
+        model = models.Model(model_input, output, name = f'A_{self.id}')
         model.compile(optimizer=optimizers.Adam(lr=0.001),
              loss = losses.categorical_crossentropy,
              metrics = [metrics.categorical_crossentropy, metrics.categorical_accuracy])
@@ -84,6 +102,8 @@ class MemoryAgent:
             _,a = self.getBestQA(state)
             return a
 
+    def getCurrentState(self):
+        return np.asarray(self.memory)
 
     def getBestQA(self, state):
 
@@ -114,9 +134,12 @@ class MemoryAgent:
 
         newQval = q_oldS_a + self.alpha * (self.rewardManager.getReward(self.id, actionTaken) + self.gamma * newVmax - q_oldS_a )
         
+        self.trainQModel(oldState, actionTaken, newQval)
+
+        pass
 
 
-
-        # 2 update policy for newState?
-
+    def trainQModel(self, state, action, newQval):
+        X = np.append(state, [action]).reshape(-1, 1)
+        self.q.fit(X, newQval, epochs=1, batch_size=1)
 

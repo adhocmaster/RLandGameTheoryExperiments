@@ -68,6 +68,7 @@ class EnvWrapperFactory():
         #     env = EnvWrapperGrayScaleObservation(env)
         env = EnvWrapperGrayScaleObservation(env)
         env = EnvWrapperObservationResizer(env, shape)
+        env = gym.wrappers.FrameStack(env, 5)
         print("shape after all transformations:", env.observation_space.shape)
         return env
     

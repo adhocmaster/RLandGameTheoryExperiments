@@ -7,7 +7,14 @@ class Agent:
         self.state_shape = state_shape
         self.action_shape = action_shape
         self.device = device
+
+        self.initNet()
         pass
+
+    @property
+    @abstractmethod
+    def net(self):
+        raise Exception("Not implemented net")
 
     @abstractmethod
     def initNet(self):
@@ -21,3 +28,5 @@ class Agent:
     @abstractmethod
     def learn(self):
         raise Exception("Not implemented learn")
+
+    

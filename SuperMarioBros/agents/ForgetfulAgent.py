@@ -1,13 +1,12 @@
 from matplotlib.pyplot import axis
-from .Agent import Agent
+from .DQNAgent import DQNAgent
 import numpy as np
-from gym.wrappers import LazyFrames
 import torch
 from .CNN50x50 import CNN50x50
 from collections import deque
 import random
 
-class ForgetfulAgent(Agent):
+class ForgetfulAgent(DQNAgent):
     
     def __init__(self, 
                     state_shape, 
@@ -20,78 +19,71 @@ class ForgetfulAgent(Agent):
             device=device
         )
 
-        self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99
-        self.exploration_rate_min = 0.1
-        self.current_step = 0
+        # self.exploration_rate = 1
+        # self.exploration_rate_decay = 0.99
+        # self.exploration_rate_min = 0.1
+        # self.current_step = 0
 
-        self.memory = deque(maxlen=10_000)
-        self.batchSize = 32
+        # self.memory = deque(maxlen=10_000)
+        self.gamma
+
+        self._optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
+        self._loss_func = torch.nn.SmoothL1Loss()
+
+        # learning parameters
+        self.onlinePeriod = 5
+        self.targetPeriod = 1e4
+        self.burnInPeriod = 1000
+
+    @property
+    def net(self):
+        return self._net
+    
+    @property
+    def lr(self):
+        return 0.0001
+
+    @property
+    def gamma(self):
+        return 0.9
 
 
-    #region high-level
+    @property
+    def lossFunc(self):
+        return self._loss_func
+
+    @property
+    def optimizer(self):
+        return self._optim
+
     def initNet(self):
-        self.net = CNN50x50(self.state_shape, self.action_shape)
+        self._net = CNN50x50(self.state_shape, self.action_shape)
         if self.device:
-            self.net = self.net.to(self.device)
+            self._net = self._net.to(self.device)
 
-    def getAction(self, state:LazyFrames) -> int:
-        if self._explore():
-            action = np.random.randint(self.action_shape)
-        else:
-            action = self._exploit(state)
-
-        
-
-        self.exploration_rate *= self.exploration_rate_decay
-        self.exploration_rate = max(self.exploration_rate, self.exploration_rate_min)
-
-        self.current_step += 1
-
-        return action
 
 
     def learn(self):
-        raise Exception("Not implemented learn")
-
-    #endregion
-
-    #region low-level    
-    def _explore(self):
-        return np.random.rand() < self.exploration_rate
-
-    def _exploit(self, state:LazyFrames) -> int:
-
-        stateArr = state.__array__() # lazy frames to ndarray
-        stateTs = torch.tensor(stateArr, device=self.device)
-
-        # add batch dimension
-        stateInput = stateTs.unsqueeze(0)
-        actionVals = self.net(state, model="online")
-        bestAction = torch.argmax(actionVals, axis=1).item()
-
-        return bestAction
-
-
-    def cache(self, state, next_state, action, reward, done):
-        state = state.__array__()
-        next_state = next_state.__array__()
-        state = torch.tensor(state, device=self.device)
-        next_state = torch.tensor(next_state, device=self.device)
-        action = torch.tensor([action], device=self.device)
-        reward = torch.tensor([reward], device=self.device)
-        done = torch.tensor([done], device=self.device)
-        self.memory.append((state, next_state, action, reward, done,))
-
-
-    def recall(self):
         """
-        Retrieve a batch of experiences from memory
+        Plan: 
+        onlinePeriod - learn every online_period experiences
+        targetPeriod - transfer weights from online to target every target_period experiences
+        burnInPeriod - gather burnIn_period experiences before starting to learn.
+
+        returns average batch qOnline and average batch loss
+
         """
-        batch = random.sample(self.memory, self.batch_size)
-        state, next_state, action, reward, done = map(torch.stack, zip(*batch)) # zip(*batch) -> seperate lists of states, next_states, ...
-        return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze() # what is the point of unsqueezing in caching then
 
+        if self.current_step < self.burnInPeriod:
+            return None, None
+        
+        if self.current_step % self.onlinePeriod != 0:
+            return None, None
 
+        
+        if self.current_step % self.targetPeriod == 0:
+            self.net.updateTarget()
+        
+        return self.replayExperiences()
 
     #endregion

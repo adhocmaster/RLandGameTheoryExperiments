@@ -3,7 +3,7 @@ import torch
 from torch import nn
 import copy
 
-class CNN1(nn.Module):
+class CNN50x50(nn.Module):
 
     def __init__(self, input_shape, output_shape):
         super().__init__()
@@ -11,6 +11,11 @@ class CNN1(nn.Module):
         inputChannels, h, w = input_shape
         self.activation = nn.LeakyReLU(0.01)
         self.batch_flattener = nn.Flatten(start_dim=1) # make flat from dim 1 (So, batch dim is kept)
+
+        if h != 50:
+            raise ValueError(f"Height must be 50, got {h}")
+        if w != 50:
+            raise ValueError(f"Width must be 50, got {w}")
 
         self.online = nn.Sequential(
             nn.Conv2d(inputChannels, 32, 5, 2), #50x50 -> (49-2) / 2 = 23 => 2, 4, ... 46 => (23x23)x32

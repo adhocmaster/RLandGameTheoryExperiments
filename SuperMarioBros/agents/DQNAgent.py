@@ -161,9 +161,12 @@ class DQNAgent(Agent):
         next_state = next_state.__array__()
         state = torch.tensor(state, device=self.device)
         next_state = torch.tensor(next_state, device=self.device)
-        action = torch.tensor([action], device=self.device)
-        reward = torch.tensor([reward], device=self.device)
-        done = torch.tensor([done], device=self.device, dtype=torch.float) # no bool
+        # action = torch.tensor([action], device=self.device)
+        # reward = torch.tensor([reward], device=self.device)
+        # done = torch.tensor([done], device=self.device, dtype=torch.float) # no bool
+        action = torch.tensor(action, device=self.device)
+        reward = torch.tensor(reward, device=self.device)
+        done = torch.tensor(done, device=self.device, dtype=torch.float) # no bool
         self.memory.append((state, next_state, action, reward, done,))
 
 
@@ -173,7 +176,7 @@ class DQNAgent(Agent):
         """
         batch = random.sample(self.memory, self.batchSize)
         state, next_state, action, reward, done = map(torch.stack, zip(*batch)) # zip(*batch) -> seperate lists of states, next_states, ...
-        return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze() # what is the point of unsqueezing in caching then
+        return state, next_state, action, reward, done # what is the point of unsqueezing in caching then
 
     #endregion
 

@@ -1,34 +1,37 @@
+"""
+Adapted from https://pytorch.org/tutorials/intermediate/mario_rl_tutorial.html
+"""
 from turtle import forward
 import torch
 from torch import nn
 import copy
 from .DoubleNet import DoubleNet
 
-class CNN50x50(DoubleNet):
+class CNN84x84(DoubleNet):
 
     def __init__(self, input_shape, output_shape):
         super().__init__()
 
-        self.name="CNN50x50"
+        self.name="CNN84x84"
 
         inputChannels, h, w = input_shape
-        self.activation = nn.LeakyReLU(0.01)
+        self.activation = nn.ReLU()
         self.batch_flattener = nn.Flatten(start_dim=1) # make flat from dim 1 (So, batch dim is kept)
 
-        if h != 50:
-            raise ValueError(f"Height must be 50, got {h}")
-        if w != 50:
-            raise ValueError(f"Width must be 50, got {w}")
+        if h != 84:
+            raise ValueError(f"Height must be 84, got {h}")
+        if w != 84:
+            raise ValueError(f"Width must be 84, got {w}")
 
         self._online = nn.Sequential(
-            nn.Conv2d(inputChannels, 32, 5, 2), #50x50 -> (49-2) / 2 = 23 => 2, 4, ... 46 => output = (23x23)x32, params = 5x5x5x32 + 32 = 
+            nn.Conv2d(inputChannels, 32, 8, 4), #50x50 -> (49-2) / 2 = 23 => 2, 4, ... 46 => output = (23x23)x32, params = 5x5x5x32 + 32 = 
             self.activation, 
-            # nn.Conv2d(32, 64, 2, 2), # 11x11x32 -> 
-            # self.activation,
-            nn.Conv2d(32, 64, 3, 1), # (23x23)x32 -> 21x21x64
+            nn.Conv2d(32, 64, 4, 2), # (23x23)x32 -> 21x21x64
+            self.activation,
+            nn.Conv2d(64, 64, 3, 1), # (23x23)x32 -> 21x21x64
             self.activation,
             self.batch_flattener,
-            nn.Linear(21*21*64, 512),
+            nn.Linear(3136, 512),
             self.activation,
             nn.Linear(512, output_shape)
         )

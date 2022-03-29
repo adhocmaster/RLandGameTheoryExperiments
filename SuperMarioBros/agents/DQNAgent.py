@@ -7,6 +7,7 @@ from collections import deque
 from .DoubleNet import DoubleNet
 from gym.wrappers import LazyFrames
 import random
+import logging
 
 
 class DQNAgent(Agent):
@@ -23,7 +24,7 @@ class DQNAgent(Agent):
         )
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99
+        self.exploration_rate_decay = 0.9999995
         self.exploration_rate_min = 0.1
         self.current_step = 0
 
@@ -110,6 +111,7 @@ class DQNAgent(Agent):
 
 
     def updateQtarget(self):
+        logging.debug(f"updating target network")
         self.net.updateTarget()
 
 

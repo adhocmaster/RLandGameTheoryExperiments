@@ -3,6 +3,7 @@ from .DQNAgent import DQNAgent
 import numpy as np
 import torch
 from .CNN50x50 import CNN50x50
+from .CNN84x84 import CNN84x84
 from collections import deque
 import random
 
@@ -12,12 +13,17 @@ class ForgetfulAgent(DQNAgent):
                     state_shape, 
                     action_shape, 
                     device = None,
+                    net_name="CNN50x50"
                     ) -> None:
+
+        self.net_name = net_name
+        
         super().__init__(
             state_shape=state_shape,
             action_shape=action_shape,
             device=device
         )
+
 
         # self.exploration_rate = 1
         # self.exploration_rate_decay = 0.99
@@ -34,6 +40,10 @@ class ForgetfulAgent(DQNAgent):
         self.onlinePeriod = 5
         self.targetPeriod = 1e4
         self.burnInPeriod = 1000
+
+    @property
+    def name(self):
+        return f"ForgetfulAgent-{self.net.name}"
 
     @property
     def net(self):
@@ -57,8 +67,13 @@ class ForgetfulAgent(DQNAgent):
         return self._optim
 
     def initNet(self):
-        self._net = CNN50x50(self.state_shape, self.action_shape)
-        if self.device:
+        if self.net_name == "CNN50x50":
+            self._net = CNN50x50(self.state_shape, self.action_shape)
+
+        if self.net_name == "CNN84x84":
+            self._net = CNN84x84(self.state_shape, self.action_shape)
+
+        if self.device and self._net:
             self._net = self._net.to(self.device)
 
 

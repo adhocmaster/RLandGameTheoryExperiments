@@ -59,13 +59,40 @@ class EnvWrapperObservationResizer(gym.ObservationWrapper):
         return transforms(observation)
 
 
+class EnvWrapperFrameSkipper(gym.Wrapper):
+    def __init__(self, env, nSkip):
+        """Return only every `skip`-th frame"""
+        super().__init__(env)
+        self._nSkip = nSkip
+
+    
+    def step(self, action):
+        """
+        Assuming an action continues to be applied in the skipped frames.
+        Some frame may get a reward, so, we carry the reward to the next frame that will be learning on
+        """
+        totalR = 0.0
+        done = False
+
+        for _ in range(self._nSkip):
+            obs, reward, done, info = self.env.step(action)
+            totalR += reward
+
+            if done or info["flag_get"]:
+                break
+
+        return obs, totalR, done, info
+
+
+
 class EnvWrapperFactory():
 
     @staticmethod
-    def convert(env, shape, gray=True):
+    def convert(env, shape, nSkip=4, gray=True):
         print("shape before any transformations:", env.observation_space.shape)
         # if gray:
         #     env = EnvWrapperGrayScaleObservation(env)
+        env = EnvWrapperFrameSkipper(env, nSkip)
         env = EnvWrapperGrayScaleObservation(env)
         env = EnvWrapperObservationResizer(env, shape)
         env = gym.wrappers.FrameStack(env, 5)

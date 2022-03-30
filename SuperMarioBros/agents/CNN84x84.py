@@ -12,8 +12,6 @@ class CNN84x84(DoubleNet):
     def __init__(self, input_shape, output_shape):
         super().__init__()
 
-        self.name="CNN84x84"
-
         inputChannels, h, w = input_shape
         self.activation = nn.ReLU()
         self.batch_flattener = nn.Flatten(start_dim=1) # make flat from dim 1 (So, batch dim is kept)
@@ -24,11 +22,11 @@ class CNN84x84(DoubleNet):
             raise ValueError(f"Width must be 84, got {w}")
 
         self._online = nn.Sequential(
-            nn.Conv2d(inputChannels, 32, 8, 4), #50x50 -> (49-2) / 2 = 23 => 2, 4, ... 46 => output = (23x23)x32, params = 5x5x5x32 + 32 = 
+            nn.Conv2d(inputChannels, 32, 8, 4), #84x84 -> (83-3 = 80) / 4 = 20 => 4, 8, ... 80 => output = (20x20)x32, params = 5x5x5x32 + 32 = 
             self.activation, 
-            nn.Conv2d(32, 64, 4, 2), # (23x23)x32 -> 21x21x64
+            nn.Conv2d(32, 64, 4, 2), # (19 - 1) / 2 = 9. 2, 4, ... 18 (20x20)x32 -> 9x9x64
             self.activation,
-            nn.Conv2d(64, 64, 3, 1), # (23x23)x32 -> 21x21x64
+            nn.Conv2d(64, 64, 3, 1), # (9x9)x64 -> 7x7x64
             self.activation,
             self.batch_flattener,
             nn.Linear(3136, 512),
@@ -42,6 +40,9 @@ class CNN84x84(DoubleNet):
         for param in self._target.parameters():
             param.requires_grad = False
 
+    @property
+    def name(self):
+        return f"CNN84x84"
             
     @property
     def online(self):

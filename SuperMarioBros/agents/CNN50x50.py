@@ -9,8 +9,6 @@ class CNN50x50(DoubleNet):
     def __init__(self, input_shape, output_shape):
         super().__init__()
 
-        self.name="CNN50x50"
-
         inputChannels, h, w = input_shape
         self.activation = nn.LeakyReLU(0.01)
         self.batch_flattener = nn.Flatten(start_dim=1) # make flat from dim 1 (So, batch dim is kept)
@@ -39,6 +37,9 @@ class CNN50x50(DoubleNet):
         for param in self._target.parameters():
             param.requires_grad = False
 
+    @property
+    def name(self):
+        return f"CNN50x50"
             
     @property
     def online(self):

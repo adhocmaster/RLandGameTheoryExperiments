@@ -4,6 +4,10 @@ from abc import abstractmethod
 
 class DoubleNet(nn.Module):
 
+    @property
+    @abstractmethod
+    def name(self):
+        raise Exception("Not implemented name")
 
     @property
     @abstractmethod

@@ -8,6 +8,7 @@ from .DoubleNet import DoubleNet
 from gym.wrappers import LazyFrames
 import random
 import logging
+import os
 
 
 class DQNAgent(Agent):
@@ -154,6 +155,10 @@ class DQNAgent(Agent):
 
         return action
 
+    
+    def getBestAction(self, state:LazyFrames) -> int:
+        return self._exploitTarget(state)
+
 
     def cache(self, state, next_state, action, reward, done):
         """
@@ -182,6 +187,36 @@ class DQNAgent(Agent):
 
     #endregion
 
+    #region saving
+
+    def save(self, dir, epoch):
+        path = os.path.join(dir, f"{self.name}-checkpoint-{epoch}.pytorch")
+
+        print(f"saving model to {path}")
+        
+        torch.save({
+            "epoch": epoch,
+            "model_state_dict": self.net.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "exploration_rate": self.exploration_rate
+        }, path)
+
+    def load(self, pathStr, eval=True):
+        checkpoint = torch.load(pathStr)
+        self.net.load_state_dict(checkpoint["model_state_dict"])
+        epoch = checkpoint['epoch']
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.exploration_rate = checkpoint["exploration_rate"]
+
+        if eval:
+            self.net.eval()
+        else:
+            self.net.train()
+
+        return epoch
+
+    #end region
+
 
 
     #region low-level    
@@ -196,6 +231,18 @@ class DQNAgent(Agent):
         # add batch dimension
         stateInput = stateTs.unsqueeze(0)
         actionVals = self._net(stateInput, model="online")
+        bestAction = torch.argmax(actionVals, axis=1).item()
+
+        return bestAction
+
+    def _exploitTarget(self, state:LazyFrames) -> int:
+
+        stateArr = state.__array__() # lazy frames to ndarray
+        stateTs = torch.tensor(stateArr, device=self.device)
+
+        # add batch dimension
+        stateInput = stateTs.unsqueeze(0)
+        actionVals = self._net(stateInput, model="target")
         bestAction = torch.argmax(actionVals, axis=1).item()
 
         return bestAction

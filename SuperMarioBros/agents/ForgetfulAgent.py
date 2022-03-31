@@ -34,7 +34,7 @@ class ForgetfulAgent(DQNAgent):
         self.gamma
 
         self._optim = torch.optim.Adam(self.net.parameters(), lr=self.lr)
-        self._loss_func = torch.nn.SmoothL1Loss()
+        self._loss_func = torch.nn.SmoothL1Loss() # HuberLoss / beta
 
         # learning parameters
         self.onlinePeriod = 5

@@ -9,6 +9,7 @@ from gym.wrappers import LazyFrames
 import random
 import logging
 import os
+from datetime import date
 
 
 class DQNAgent(Agent):
@@ -190,7 +191,8 @@ class DQNAgent(Agent):
     #region saving
 
     def save(self, dir, epoch):
-        path = os.path.join(dir, f"{self.name}-checkpoint-{epoch}.pytorch")
+        day = date.today().strftime("%b-%d-%Y")
+        path = os.path.join(dir, f"{self.name}-checkpoint-{day}-{epoch}.pytorch")
 
         print(f"saving model to {path}")
         

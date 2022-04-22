@@ -30,7 +30,7 @@ class DQNAgent(Agent):
         self.exploration_rate_min = 0.1
         self.current_step = 0
 
-        self.memory = deque(maxlen=10_000)
+        self.memory = deque(maxlen=100_000)
         self.batchSize = 32
 
 

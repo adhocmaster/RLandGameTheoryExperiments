@@ -16,5 +16,5 @@
     ii. Allow left move action, but this will increase the training time greatly.
     iii. Change the reward function:
         a. The c part is probably not capturing much difference in time. Maybe reward needs to be more dynamic. Interestingly, the c-reward depends on the time difference, which does not change in 15 frames! So, we are losing a lot of computation power.
-        b. add reward for reaching a flag.
+        b. add reward for reaching a flag. But in case of experience replay, will it actually help?
         c. increase memory

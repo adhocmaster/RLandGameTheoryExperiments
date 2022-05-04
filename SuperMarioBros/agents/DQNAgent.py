@@ -167,14 +167,14 @@ class DQNAgent(Agent):
         """
         state = state.__array__()
         next_state = next_state.__array__()
-        state = torch.tensor(state, device=self.device)
-        next_state = torch.tensor(next_state, device=self.device)
+        state = torch.tensor(state, device=self.device, dtype=torch.half)
+        next_state = torch.tensor(next_state, device=self.device, dtype=torch.half)
         # action = torch.tensor([action], device=self.device)
         # reward = torch.tensor([reward], device=self.device)
         # done = torch.tensor([done], device=self.device, dtype=torch.float) # no bool
-        action = torch.tensor(action, device=self.device)
-        reward = torch.tensor(reward, device=self.device)
-        done = torch.tensor(done, device=self.device, dtype=torch.float) # no bool
+        action = torch.tensor(action, device=self.device, dtype=torch.long)
+        reward = torch.tensor(reward, device=self.device, dtype=torch.half)
+        done = torch.tensor(done, device=self.device, dtype=torch.half) # no bool
         self.memory.append((state, next_state, action, reward, done,))
 
 

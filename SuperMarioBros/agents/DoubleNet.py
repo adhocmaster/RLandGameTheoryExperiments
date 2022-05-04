@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from abc import abstractmethod
+from  torch.cuda.amp import autocast
 
 class DoubleNet(nn.Module):
 
@@ -25,7 +26,8 @@ class DoubleNet(nn.Module):
         )
         
     def forward(self, input, model):
-        if model == "online":
-            return self.online(input)
-        else:
-            return self.target(input)
+        with autocast():
+            if model == "online":
+                return self.online(input)
+            else:
+                return self.target(input)
